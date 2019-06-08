@@ -25,17 +25,22 @@ class Printer {
      * If the printed page was the last, makes the printer avaiable
      * and adds the finished document to the pile of
      * printed documents.
+     * @return Number of pages printed
      */
-    public void printPage() {
+    public int printPage() {
+        int printedPages = 0;
         if (isPrinting && currentPage > 0) {
 
             currentPage--;
+            printedPages++;
 
             if (currentPage <= 0) {
                 isPrinting = false;
+                if (previousDocs == null) previousDocs = new ArrayList<>();
                 previousDocs.add(currentDoc);
             }
         }
+        return printedPages;
     }
 
     /**
@@ -64,6 +69,7 @@ public class Main {
     public static List<Printer> printers;
     public static int numDocuments;
     public static List<Document> documents;
+    public static int numPagesPrinted = 0;
 
     /**
      * Reads file and returns it's content
@@ -144,8 +150,14 @@ public class Main {
     /**
      * Prints one page on every printer currently printing a document
      */
-    private static void printOnePageEveryPrinter() {
-        for (Printer printer : printers) printer.printPage();
+    private static boolean printOnePageEveryPrinter() {
+        boolean isAnyPrinterRunning = false;
+        for (Printer printer : printers) {
+            numPagesPrinted += printer.printPage();
+            if (printer.isPrinting)
+                isAnyPrinterRunning = true;
+        }
+        return isAnyPrinterRunning;
     }
     
     public static void main(String[] args) {
@@ -160,10 +172,11 @@ public class Main {
             readFile(args[0]);
 
             // Prints all the documents
-            while (documents.size() > 0) {
+            boolean isAnyPrinterRunning = true;
+            while (documents.size() > 0 || isAnyPrinterRunning) {
 
                 fillPrinters();
-                printOnePageEveryPrinter();
+                isAnyPrinterRunning = printOnePageEveryPrinter();
             }
 
         } catch (Exception ex) {
