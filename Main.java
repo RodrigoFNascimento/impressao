@@ -13,7 +13,7 @@ class Printer {
     public String name;
     public Document currentDoc;
     public int currentPage;
-    public List<Document> previousDocs;
+    public List<Document> previousDocs = new ArrayList<>();
     public boolean isPrinting = false;
 
     public Printer(String name) {
@@ -34,13 +34,25 @@ class Printer {
             currentPage--;
             printedPages++;
 
-            if (currentPage <= 0) {
+            if (currentPage <= 0)
                 isPrinting = false;
-                if (previousDocs == null) previousDocs = new ArrayList<>();
-                previousDocs.add(currentDoc);
-            }
         }
         return printedPages;
+    }
+
+    /**
+     * Removes current document from printer
+     * @return Removed document
+     */
+    public Document removeDoc() {
+        if (currentDoc != null) {
+            previousDocs.add(currentDoc);
+            Document removedDoc = currentDoc;
+            currentDoc = null;
+            return removedDoc;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -50,6 +62,12 @@ class Printer {
         currentDoc = doc;
         isPrinting = true;
         currentPage = doc.numPages;
+        // Prints the newly added and previously printed documents
+        System.out.print("[" + name + "] " + currentDoc.name + "-" + currentDoc.numPages + "p");
+        for (int i = previousDocs.size()-1; i >= 0; i--) {
+            System.out.print(", " + previousDocs.get(i).name + "-" + previousDocs.get(i).numPages + "p");
+        }
+        System.out.print("\n");
     }
 }
 
@@ -66,10 +84,11 @@ class Document {
 public class Main {
 
     public static int numPrinters;
-    public static List<Printer> printers;
+    public static List<Printer> printers = new ArrayList<>();
     public static int numDocuments;
-    public static List<Document> documents;
+    public static List<Document> documents = new ArrayList<>();
     public static int numPagesPrinted = 0;
+    public static List<Document> previouslyPrintedDocs = new ArrayList<>();
 
     /**
      * Reads file and returns it's content
@@ -131,58 +150,69 @@ public class Main {
     }
 
     /**
-     * If the are queued documents, sends the first one to the
-     * first avaiable printer
+     * Prints all documents in the queue
      */
-    private static void fillPrinters() {
+    private static void runPrinters() {
+        boolean isAnyPrinterRunning = false;
+        while (documents.size() > 0 || isAnyPrinterRunning) {
+            isAnyPrinterRunning = false;
+            for (Printer printer : printers) {
 
-        for (Printer printer : printers) {
+                // Prints page if there's any in the printer
+                if (printer.isPrinting)
+                    numPagesPrinted += printer.printPage();
+                
+                if (!printer.isPrinting) {
 
-            if (documents.size() == 0) break;
-                    
-            if (!printer.isPrinting) {
-                printer.addDoc(documents.get(0));
-                documents.remove(0);
+                    // Removes document from the printer if all pages
+                    // have been printed
+                    if (printer.currentDoc != null)
+                        previouslyPrintedDocs.add(printer.removeDoc());
+
+                    // If there's any document in the queue,
+                    // transfers it to the printer
+                    if (documents.size() > 0) {
+                        printer.addDoc(documents.get(0));
+                        documents.remove(0);
+                    }
+                }
+
+                // Repeats the loop while there are documents being printed
+                if (printer.isPrinting)
+                    isAnyPrinterRunning = printer.isPrinting;
             }
         }
     }
 
     /**
-     * Prints one page on every printer currently printing a document
+     * Prints all the previously printed documents
      */
-    private static boolean printOnePageEveryPrinter() {
-        boolean isAnyPrinterRunning = false;
-        for (Printer printer : printers) {
-            numPagesPrinted += printer.printPage();
-            if (printer.isPrinting)
-                isAnyPrinterRunning = true;
+    private static void showPreviouslyPrintedDocs() {
+        for (int i = previouslyPrintedDocs.size() - 1; i >= 0; i--) {
+            System.out.println(previouslyPrintedDocs.get(i).name + "-" + previouslyPrintedDocs.get(i).numPages + "p");
         }
-        return isAnyPrinterRunning;
     }
     
     public static void main(String[] args) {
-        
         try {
             // Checks if any file was passed
-            if (args.length == 0) {
+            if (args.length == 0)
                 throw new RuntimeException("You forgot the file");
-            }
 
-            // Reads content
+            // Reads the content from the input file
             readFile(args[0]);
 
-            // Prints all the documents
-            boolean isAnyPrinterRunning = true;
-            while (documents.size() > 0 || isAnyPrinterRunning) {
+            // Runs the printers
+            runPrinters();
 
-                fillPrinters();
-                isAnyPrinterRunning = printOnePageEveryPrinter();
-            }
+            // Prints the total number of pages printed
+            System.out.println(numPagesPrinted + "p");
+
+            // Prints the stack of finished documents
+            showPreviouslyPrintedDocs();
 
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        
     }
-    
 }
