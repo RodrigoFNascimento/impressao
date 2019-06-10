@@ -143,7 +143,7 @@ public class Main {
      * @param content Content to be writen on the file
      * @throws FileNotFoundException
      */
-    private static void writeToFile(String fileName, String content) throws FileNotFoundException {
+    private static void writeToFile(String fileName, StringBuilder content) throws FileNotFoundException {
 
         // Opens file
         try (PrintWriter out = new PrintWriter(fileName)) {
@@ -220,7 +220,7 @@ public class Main {
             outputString.append(getPreviouslyPrintedDocs());
 
             // Writes the output of the program to the output file
-            writeToFile(args[1], outputString.toString());
+            writeToFile(args[1], outputString);
 
         } catch (Exception ex) {
             ex.printStackTrace();
