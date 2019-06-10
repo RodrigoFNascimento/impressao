@@ -58,16 +58,19 @@ class Printer {
     /**
      * Adds document to printer
      */
-    public void addDoc(Document doc) {
+    public StringBuilder addDoc(Document doc) {
         currentDoc = doc;
         isPrinting = true;
         currentPage = doc.numPages;
+
         // Prints the newly added and previously printed documents
-        System.out.print("[" + name + "] " + currentDoc.name + "-" + currentDoc.numPages + "p");
+        StringBuilder outputString = new StringBuilder();
+        outputString.append("[" + name + "] " + currentDoc.name + "-" + currentDoc.numPages + "p");
         for (int i = previousDocs.size()-1; i >= 0; i--) {
-            System.out.print(", " + previousDocs.get(i).name + "-" + previousDocs.get(i).numPages + "p");
+            outputString.append(", " + previousDocs.get(i).name + "-" + previousDocs.get(i).numPages + "p");
         }
-        System.out.print("\n");
+        outputString.append("\n");
+        return outputString;
     }
 }
 
@@ -145,14 +148,15 @@ public class Main {
         // Opens file
         try (PrintWriter out = new PrintWriter(fileName)) {
             // Writes content to file
-            out.println(content);
+            out.print(content);
         }
     }
 
     /**
      * Prints all documents in the queue
      */
-    private static void runPrinters() {
+    private static StringBuilder runPrinters() {
+        StringBuilder output = new StringBuilder();
         boolean isAnyPrinterRunning = false;
         while (documents.size() > 0 || isAnyPrinterRunning) {
             isAnyPrinterRunning = false;
@@ -172,7 +176,7 @@ public class Main {
                     // If there's any document in the queue,
                     // transfers it to the printer
                     if (documents.size() > 0) {
-                        printer.addDoc(documents.get(0));
+                        output.append(printer.addDoc(documents.get(0)));
                         documents.remove(0);
                     }
                 }
@@ -182,34 +186,41 @@ public class Main {
                     isAnyPrinterRunning = printer.isPrinting;
             }
         }
+        return output;
     }
 
     /**
      * Prints all the previously printed documents
      */
-    private static void showPreviouslyPrintedDocs() {
+    private static StringBuilder getPreviouslyPrintedDocs() {
+        StringBuilder output = new StringBuilder();
         for (int i = previouslyPrintedDocs.size() - 1; i >= 0; i--) {
-            System.out.println(previouslyPrintedDocs.get(i).name + "-" + previouslyPrintedDocs.get(i).numPages + "p");
+            if (i > 0)
+                output.append(previouslyPrintedDocs.get(i).name + "-" + previouslyPrintedDocs.get(i).numPages + "p\n");
+            else
+                output.append(previouslyPrintedDocs.get(i).name + "-" + previouslyPrintedDocs.get(i).numPages + "p");
         }
+        return output;
     }
     
     public static void main(String[] args) {
         try {
-            // Checks if any file was passed
-            if (args.length == 0)
-                throw new RuntimeException("You forgot the file");
+            StringBuilder outputString = new StringBuilder();
 
             // Reads the content from the input file
             readFile(args[0]);
 
             // Runs the printers
-            runPrinters();
+            outputString.append(runPrinters());
 
             // Prints the total number of pages printed
-            System.out.println(numPagesPrinted + "p");
+            outputString.append(numPagesPrinted + "p\n");
 
             // Prints the stack of finished documents
-            showPreviouslyPrintedDocs();
+            outputString.append(getPreviouslyPrintedDocs());
+
+            // Writes the output of the program to the output file
+            writeToFile(args[1], outputString.toString());
 
         } catch (Exception ex) {
             ex.printStackTrace();
