@@ -4,20 +4,20 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class Printer {
     public String name;
     public Document currentDoc;
     public int currentPage;
-    public List<Document> previousDocs = new ArrayList<>();
+    public Document previousDocs;
     public boolean isPrinting = false;
+    public Printer next;
+
+    public Printer() {}
 
     public Printer(String name) {
         this.name = name;
+        next = null;
     }
 
     /**
@@ -46,7 +46,7 @@ class Printer {
      */
     public Document removeDoc() {
         if (currentDoc != null) {
-            previousDocs.add(currentDoc);
+            previousDocs.append(currentDoc);
             Document removedDoc = currentDoc;
             currentDoc = null;
             return removedDoc;
@@ -72,26 +72,121 @@ class Printer {
         outputString.append("\n");
         return outputString;
     }
+
+    /**
+     * Appends a node to the end of the list
+     * @param newPrinter Printer to be added
+     */
+    public void append(Printer newPrinter) {
+        Printer temp = this.next;
+        while (temp != null) {
+            temp = temp.next;
+        }
+        temp = newPrinter;
+
+    }
 }
 
 class Document {
     public String name;
     public int numPages;
+    public Document next;
+
+    public Document() {}
 
     public Document(String name, int numPages) {
         this.name = name;
         this.numPages = numPages;
+        next = null;
+    }
+
+    /**
+     * Appends a node to the end of the list
+     * @param newDocument Document to be added
+     */
+    public void append(Document newDocument) {
+        Document temp = next;
+        while (temp != null) {
+            temp = temp.next;
+        }
+        temp = newDocument;
+    }
+
+    /**
+     * Returns the size of the Document list
+     * @return Size of the list
+     */
+    public int size() {
+        int i = 0;
+        Document temp = this.next;
+        while (temp != null) {
+            temp = temp.next;
+            i++;
+        }
+        return i;
+    }
+
+    /**
+     * Gets a document by index
+     * @param index Index of the Document
+     * @return Document in index
+     */
+    public Document get(int index) {
+        int i = 0;
+        Document temp = this.next;
+        while (temp != null) {
+            if (index == i) {
+                return temp;
+            }
+            temp = temp.next;
+            i++;
+        }
+        return null;
+    }
+
+    public void remove(int index) {
+        int i = 0;
+        Document temp = this;
+        while (temp != null) {
+            if (index == i) {
+                if (temp.next != null) {
+                    temp.next = temp.next.next;
+                }
+            }
+            temp = temp.next;
+            i++;
+        }
     }
 }
 
 public class Main {
 
     public static int numPrinters;
-    public static List<Printer> printers = new ArrayList<>();
+    public static Printer printers = new Printer();
     public static int numDocuments;
-    public static List<Document> documents = new ArrayList<>();
+    public static Document documents = new Document();
     public static int numPagesPrinted = 0;
-    public static List<Document> previouslyPrintedDocs = new ArrayList<>();
+    public static Document previouslyPrintedDocs = new Document();
+
+    private static Document addToEndOfList(Document head, Document currentNode, Document newNode) {
+        
+        if (currentNode.next == null) {
+            currentNode.next = newNode;
+        } else {
+            addToEndOfList(head, currentNode.next, newNode);
+        }
+        return head;
+    }
+
+    private static Printer addToEndOfList(Printer head, Printer currentNode, Printer newNode) {
+        
+        if (currentNode.next == null) {
+            currentNode.next = newNode;
+        } else {
+            addToEndOfList(head, currentNode.next, newNode);
+        }
+        return head;
+    }
 
     /**
      * Reads file and returns it's content
@@ -112,27 +207,23 @@ public class Main {
             numPrinters = Integer.parseInt(reader.readLine());
             // Reads the names of the printers
             Printer newPrinter;
-            printers = new ArrayList<>();
             for (int i = 0; i < numPrinters; i++) {
                 line = reader.readLine();
                 newPrinter = new Printer(line);
-                printers.add(newPrinter);
+                printers = addToEndOfList(printers, printers, newPrinter);
             }
 
             // Reads the number of documents
             numDocuments = Integer.parseInt(reader.readLine());
             // Reads the names of the documents
             Document newDocument;
-            documents = new ArrayList<>();
-            String regex = "^(\\w+)\\s(\\d+)";
-            Pattern p = Pattern.compile(regex);
-            Matcher m;
             for (int i = 0; i < numDocuments; i++) {
                 line = reader.readLine();
-                m = p.matcher(line);
-                m.matches();
-                newDocument = new Document(m.group(1), Integer.parseInt(m.group(2)));
-                documents.add(newDocument);
+                int indexOfFirstSpace = line.indexOf(" ");
+                String name = line.substring(0, indexOfFirstSpace);
+                int pages = Integer.parseInt(line.substring(++indexOfFirstSpace));
+                newDocument = new Document(name, pages);
+                documents = addToEndOfList(documents, documents, newDocument);
             }
         }
     }
@@ -160,7 +251,9 @@ public class Main {
         boolean isAnyPrinterRunning = false;
         while (documents.size() > 0 || isAnyPrinterRunning) {
             isAnyPrinterRunning = false;
-            for (Printer printer : printers) {
+            
+            Printer printer = printers.next;
+            while (printer != null) {
 
                 // Prints page if there's any in the printer
                 if (printer.isPrinting)
@@ -171,7 +264,7 @@ public class Main {
                     // Removes document from the printer if all pages
                     // have been printed
                     if (printer.currentDoc != null)
-                        previouslyPrintedDocs.add(printer.removeDoc());
+                        previouslyPrintedDocs = addToEndOfList(previouslyPrintedDocs, previouslyPrintedDocs, printer.removeDoc());
 
                     // If there's any document in the queue,
                     // transfers it to the printer
@@ -184,6 +277,8 @@ public class Main {
                 // Repeats the loop while there are documents being printed
                 if (printer.isPrinting)
                     isAnyPrinterRunning = printer.isPrinting;
+
+                printer = printer.next;
             }
         }
         return output;
@@ -219,8 +314,11 @@ public class Main {
             // Prints the stack of finished documents
             outputString.append(getPreviouslyPrintedDocs());
 
+            // Printes the output to the terminal
+            System.out.println(outputString);
+            
             // Writes the output of the program to the output file
-            writeToFile(args[1], outputString);
+            //writeToFile(args[1], outputString);
 
         } catch (Exception ex) {
             ex.printStackTrace();
