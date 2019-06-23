@@ -5,6 +5,146 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
+class ListUtil {
+    /**
+     * Adds a new node to the end of the list.
+     * @param head Head of the list
+     * @param newNode Node to be added to the list
+     */
+    public static void append(Document head, Document newNode) {
+        Document temp = head;
+        while (temp.next != null) {
+            temp = temp.next;
+        }
+        temp.next = newNode;
+    }
+
+    public static void append(Printer head, Printer newNode) {
+        while (head.next != null) {
+            head = head.next;
+        }
+        head.next = newNode;
+    }
+
+    /**
+     * Removes from the list the node on the specified index.
+     * @param head Head of the list
+     * @param index Index of the node to be removed
+     */
+    public static void remove(Printer head, int index) {
+        int i = 0;
+        while (head.next != null && i != index) {
+            head = head.next;
+            i++;
+        }
+
+        if (i == index) {
+            head.next = head.next.next;
+        }
+    }
+
+    public static void remove(Document head, int index) {
+        int i = 0;
+        while (head.next != null && i != index) {
+            head = head.next;
+            i++;
+        }
+
+        if (i == index) {
+            head.next = head.next.next;
+        }
+    }
+
+    /**
+     * Removes one node from the top of the stack.
+     * @param head Head of the stack
+     */
+    public static void removeFromStack(Printer head) {
+        while (head.next != null) {
+            if (head.next.next == null) {
+                head.next = null;
+            } else {
+                head = head.next;
+            }
+        }
+    }
+
+    public static void removeFromStack(Document head) {
+        while (head.next != null) {
+            if (head.next.next == null) {
+                head.next = null;
+            } else {
+                head = head.next;
+            }
+        }
+    }
+
+    /**
+     * Removes the first node of the queue.
+     * @param head Head of the queue
+     */
+    public static void removeFromQueue(Printer head) {
+        if (head.next != null) {
+            head.next = head.next.next;
+        }
+    }
+
+    public static void removeFromQueue(Document head) {
+        if (head.next != null) {
+            head.next = head.next.next;
+        }
+    }
+
+    /**
+     * Returns the node of the list located at the specified index
+     * @param head Head of the list
+     * @param index Index of the node
+     * @return Node located at the specified index
+     */
+    public static Printer get(Printer head, int index) {
+        int i = 0;
+        while (head.next != null && i != index) {
+            head = head.next;
+            i++;
+        }
+
+        return head.next;
+    }
+
+    public static Document get(Document head, int index) {
+        int i = 0;
+        while (head.next != null && i != index) {
+            head = head.next;
+            i++;
+        }
+
+        return head.next;
+    }
+
+    /**
+     * Returns the size of the list
+     * @param head Head of the list
+     * @return Size of the list
+     */
+    public static int size(Printer head) {
+        int i = 0;
+        while (head.next != null) {
+            head = head.next;
+            i++;
+        }
+        return i;
+    }
+
+    public static int size(Document head) {
+        int i = 0;
+        while (head.next != null) {
+            head = head.next;
+            i++;
+        }
+        return i;
+    }
+}
+
 class Printer {
     public String name;
     public Document currentDoc;
@@ -12,78 +152,15 @@ class Printer {
     public Document previousDocs;
     public boolean isPrinting = false;
     public Printer next;
+    public String previousDocsNames;
 
     public Printer() {}
 
     public Printer(String name) {
         this.name = name;
+        previousDocs = new Document();
         next = null;
-    }
-
-    /**
-     * Prints one page of the current document.
-     * If the printed page was the last, makes the printer avaiable
-     * and adds the finished document to the pile of
-     * printed documents.
-     * @return Number of pages printed
-     */
-    public int printPage() {
-        int printedPages = 0;
-        if (isPrinting && currentPage > 0) {
-
-            currentPage--;
-            printedPages++;
-
-            if (currentPage <= 0)
-                isPrinting = false;
-        }
-        return printedPages;
-    }
-
-    /**
-     * Removes current document from printer
-     * @return Removed document
-     */
-    public Document removeDoc() {
-        if (currentDoc != null) {
-            previousDocs.append(currentDoc);
-            Document removedDoc = currentDoc;
-            currentDoc = null;
-            return removedDoc;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Adds document to printer
-     */
-    public StringBuilder addDoc(Document doc) {
-        currentDoc = doc;
-        isPrinting = true;
-        currentPage = doc.numPages;
-
-        // Prints the newly added and previously printed documents
-        StringBuilder outputString = new StringBuilder();
-        outputString.append("[" + name + "] " + currentDoc.name + "-" + currentDoc.numPages + "p");
-        for (int i = previousDocs.size()-1; i >= 0; i--) {
-            outputString.append(", " + previousDocs.get(i).name + "-" + previousDocs.get(i).numPages + "p");
-        }
-        outputString.append("\n");
-        return outputString;
-    }
-
-    /**
-     * Appends a node to the end of the list
-     * @param newPrinter Printer to be added
-     */
-    public void append(Printer newPrinter) {
-        Printer temp = this.next;
-        while (temp != null) {
-            temp = temp.next;
-        }
-        temp = newPrinter;
-
+        previousDocsNames = null;
     }
 }
 
@@ -99,94 +176,16 @@ class Document {
         this.numPages = numPages;
         next = null;
     }
-
-    /**
-     * Appends a node to the end of the list
-     * @param newDocument Document to be added
-     */
-    public void append(Document newDocument) {
-        Document temp = next;
-        while (temp != null) {
-            temp = temp.next;
-        }
-        temp = newDocument;
-    }
-
-    /**
-     * Returns the size of the Document list
-     * @return Size of the list
-     */
-    public int size() {
-        int i = 0;
-        Document temp = this.next;
-        while (temp != null) {
-            temp = temp.next;
-            i++;
-        }
-        return i;
-    }
-
-    /**
-     * Gets a document by index
-     * @param index Index of the Document
-     * @return Document in index
-     */
-    public Document get(int index) {
-        int i = 0;
-        Document temp = this.next;
-        while (temp != null) {
-            if (index == i) {
-                return temp;
-            }
-            temp = temp.next;
-            i++;
-        }
-        return null;
-    }
-
-    public void remove(int index) {
-        int i = 0;
-        Document temp = this;
-        while (temp != null) {
-            if (index == i) {
-                if (temp.next != null) {
-                    temp.next = temp.next.next;
-                }
-            }
-            temp = temp.next;
-            i++;
-        }
-    }
 }
 
 public class Main {
 
     public static int numPrinters;
-    public static Printer printers = new Printer();
+    public static Printer printers = new Printer(null);
     public static int numDocuments;
-    public static Document documents = new Document();
+    public static Document documents = new Document(null, 0);
     public static int numPagesPrinted = 0;
-    public static Document previouslyPrintedDocs = new Document();
-
-    private static Document addToEndOfList(Document head, Document currentNode, Document newNode) {
-        
-        if (currentNode.next == null) {
-            currentNode.next = newNode;
-        } else {
-            addToEndOfList(head, currentNode.next, newNode);
-        }
-        return head;
-    }
-
-    private static Printer addToEndOfList(Printer head, Printer currentNode, Printer newNode) {
-        
-        if (currentNode.next == null) {
-            currentNode.next = newNode;
-        } else {
-            addToEndOfList(head, currentNode.next, newNode);
-        }
-        return head;
-    }
+    public static StringBuilder previouslyPrintedDocs = new StringBuilder();
 
     /**
      * Reads file and returns it's content
@@ -210,7 +209,8 @@ public class Main {
             for (int i = 0; i < numPrinters; i++) {
                 line = reader.readLine();
                 newPrinter = new Printer(line);
-                printers = addToEndOfList(printers, printers, newPrinter);
+                ListUtil.append(printers, newPrinter);
+                //printers = addToEndOfList(printers, printers, newPrinter);
             }
 
             // Reads the number of documents
@@ -223,7 +223,8 @@ public class Main {
                 String name = line.substring(0, indexOfFirstSpace);
                 int pages = Integer.parseInt(line.substring(++indexOfFirstSpace));
                 newDocument = new Document(name, pages);
-                documents = addToEndOfList(documents, documents, newDocument);
+                ListUtil.append(documents, newDocument);
+                //documents = addToEndOfList(documents, documents, newDocument);
             }
         }
     }
@@ -248,35 +249,53 @@ public class Main {
      */
     private static StringBuilder runPrinters() {
         StringBuilder output = new StringBuilder();
-        boolean isAnyPrinterRunning = false;
-        while (documents.size() > 0 || isAnyPrinterRunning) {
-            isAnyPrinterRunning = false;
+        while (documents.next != null || isAnyPrinterRunning(printers)) {
             
             Printer printer = printers.next;
             while (printer != null) {
 
-                // Prints page if there's any in the printer
-                if (printer.isPrinting)
-                    numPagesPrinted += printer.printPage();
-                
-                if (!printer.isPrinting) {
+                if (printer.currentPage <= 0) {
 
-                    // Removes document from the printer if all pages
-                    // have been printed
-                    if (printer.currentDoc != null)
-                        previouslyPrintedDocs = addToEndOfList(previouslyPrintedDocs, previouslyPrintedDocs, printer.removeDoc());
+                    printer.isPrinting = false;
 
-                    // If there's any document in the queue,
-                    // transfers it to the printer
-                    if (documents.size() > 0) {
-                        output.append(printer.addDoc(documents.get(0)));
-                        documents.remove(0);
+                    // Adds the finished Document to the stacks of previously printed Docs
+                    if (printer.currentDoc != null) {
+                        ListUtil.append(printer.previousDocs, new Document(printer.currentDoc.name, printer.currentDoc.numPages));
+                        if (previouslyPrintedDocs.length() == 0) {
+                            previouslyPrintedDocs.insert(0, printer.currentDoc.name + "-" + printer.currentDoc.numPages + "p");
+                        } else {
+                            previouslyPrintedDocs.insert(0, printer.currentDoc.name + "-" + printer.currentDoc.numPages + "p\n");
+                        }
                     }
-                }
 
-                // Repeats the loop while there are documents being printed
-                if (printer.isPrinting)
-                    isAnyPrinterRunning = printer.isPrinting;
+                    if (documents.next != null) {
+                        // Takes Document from Document queue to the printer
+                        printer.currentDoc = new Document(documents.next.name, documents.next.numPages);
+                        printer.currentPage = printer.currentDoc.numPages;
+                        printer.isPrinting = true;
+                        ListUtil.removeFromQueue(documents);
+
+
+                        // Handles the printing of the names of documents of the printers
+                        if (printer.previousDocsNames == null)
+                            printer.previousDocsNames = printer.currentDoc.name + "-" + printer.currentDoc.numPages + "p";
+                        else
+                            printer.previousDocsNames = printer.currentDoc.name + "-" + printer.currentDoc.numPages + "p, " + printer.previousDocsNames;
+
+                        output.append("[" + printer.name + "] ");
+                        output.append(printer.previousDocsNames + "\n");
+
+                    } else {
+                        printer.currentDoc = null;
+                    }
+                    
+                }
+                
+                // Refreshs the counters
+                if (printer.currentPage > 0) {
+                    printer.currentPage--;
+                    numPagesPrinted++;
+                }
 
                 printer = printer.next;
             }
@@ -285,17 +304,17 @@ public class Main {
     }
 
     /**
-     * Prints all the previously printed documents
+     * Checks if any of the printers is still running.
+     * @param head Head of the list
+     * @return {@code true} if any printer is running, {@code false} otherwise
      */
-    private static StringBuilder getPreviouslyPrintedDocs() {
-        StringBuilder output = new StringBuilder();
-        for (int i = previouslyPrintedDocs.size() - 1; i >= 0; i--) {
-            if (i > 0)
-                output.append(previouslyPrintedDocs.get(i).name + "-" + previouslyPrintedDocs.get(i).numPages + "p\n");
-            else
-                output.append(previouslyPrintedDocs.get(i).name + "-" + previouslyPrintedDocs.get(i).numPages + "p");
+    private static boolean isAnyPrinterRunning(Printer head) {
+        boolean isRunning = false;
+        while (head.next != null) {
+            isRunning = isRunning || head.next.isPrinting;
+            head = head.next;
         }
-        return output;
+        return isRunning;
     }
     
     public static void main(String[] args) {
@@ -312,13 +331,13 @@ public class Main {
             outputString.append(numPagesPrinted + "p\n");
 
             // Prints the stack of finished documents
-            outputString.append(getPreviouslyPrintedDocs());
+            outputString.append(previouslyPrintedDocs);
 
             // Printes the output to the terminal
-            System.out.println(outputString);
+            //System.out.println(outputString);
             
             // Writes the output of the program to the output file
-            //writeToFile(args[1], outputString);
+            writeToFile(args[1], outputString);
 
         } catch (Exception ex) {
             ex.printStackTrace();
